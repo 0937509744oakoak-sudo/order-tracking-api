@@ -1,0 +1,52 @@
+@baseUrl = http://localhost:3000
+@orderNo = ORD-0123456789
+
+### Health
+GET {{baseUrl}}/health
+
+### Create order (replay safely using the same Idempotency-Key)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Idempotency-Key: demo-order-0001
+
+{
+  "amount": 199.00,
+  "items": [{ "sku": "GAME-CREDIT", "quantity": 1 }],
+  "customerUid": "player-123"
+}
+
+### Get order
+GET {{baseUrl}}/orders/{{orderNo}}
+
+### Current orders, page 1
+GET {{baseUrl}}/orders?tab=current&page=1&limit=20
+
+### Order timeline
+GET {{baseUrl}}/orders/{{orderNo}}/timeline
+
+### Report an issue
+POST {{baseUrl}}/orders/{{orderNo}}/report-issue
+Content-Type: application/json
+
+{
+  "category": "DELAY",
+  "description": "Order has not progressed for longer than expected"
+}
+
+### Provider webhook: payment confirmed (moves PENDING_PAYMENT to QUEUED)
+POST {{baseUrl}}/orders/webhooks/status
+Content-Type: application/json
+
+{
+  "eventId": "payment-event-0001",
+  "orderNo": "{{orderNo}}",
+  "status": "QUEUED"
+}
+
+### Correct an invalid UID on FAILED/DELAYED order
+POST {{baseUrl}}/orders/{{orderNo}}/correct-uid
+Content-Type: application/json
+
+{
+  "customerUid": "correct-player-123"
+}
